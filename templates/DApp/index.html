@@ -1,0 +1,75 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Генеалогическое дерево</title>
+    <style>
+        #cy {
+            width: 100%;
+            height: 90vh;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Генеалогическое дерево</h1>
+
+<div id="cy"></div>
+
+<!-- Подключаем Cytoscape.js -->
+<script src="https://unpkg.com/cytoscape@3.24.0/dist/cytoscape.min.js"></script>
+<!-- Подключаем макет (layout) dagre -->
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.1.0/cytoscape-dagre.min.js"></script>
+
+<script>
+// Запрашиваем данные с API
+fetch("{% url 'DApp:family_graph_json' %}")
+    .then(response => response.json())
+    .then(graphData => {
+        // Инициализируем граф
+        const cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: graphData,
+            style: [{
+                selector: 'node',
+                style: {
+                    'background-color': data => data.data('gender') === 'M' ? '#66B2FF' : '#FF99CC',
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'color': '#000',
+                    'font-size': 14
+                }
+            }, {
+                selector: 'edge[type="parent-child"]',
+                style: {
+                    'line-color': '#555',
+                    'target-arrow-color': '#555',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier'
+                }
+            }, {
+                selector: 'edge[type="spouse"]',
+                style: {
+                    'line-color': '#e74c3c',
+                    'width': 2,
+                    'curve-style': 'bezier',
+                    'control-point-distance': -40,
+                    'line-style': data => data.data('married') ? 'solid' : 'dashed'
+                }
+            }]
+        });
+
+        // Расположение графа слева направо
+        cy.layout({
+            name: 'dagre',
+            rankDir: 'LR',  // left to right
+            padding: 10
+        }).run;
+    });
+</script>
+
+</body>
+</html>
